@@ -24,7 +24,8 @@ import {
   Quote,
   Star,
   RefreshCw,
-  Plus
+  Plus,
+  Check
 } from 'lucide-react';
 
 export default function Home() {
@@ -55,6 +56,15 @@ export default function Home() {
     if (!b.dateFinished) return true;
     return new Date(b.dateFinished).getFullYear() === currentYear;
   }).length;
+
+  // Recently finished books, sorted chronologically by completion date
+  const recentlyFinishedBooks = [...completedBooks]
+    .sort((a, b) => {
+      const dateA = a.dateFinished ? new Date(a.dateFinished).getTime() : 0;
+      const dateB = b.dateFinished ? new Date(b.dateFinished).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 4);
 
   const streak = calculateReadingStreak(sessions);
   const goalPercent = Math.min(100, Math.round((completedThisYear / (goal || 1)) * 100));
@@ -532,30 +542,31 @@ export default function Home() {
           </button>
         </div>
 
-        {completedBooks.length > 0 ? (
+        {recentlyFinishedBooks.length > 0 ? (
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '1.25rem'
-            }}
+            className="recently-finished-grid"
+            style={
+              recentlyFinishedBooks.length < 4
+                ? { gridTemplateColumns: `repeat(${recentlyFinishedBooks.length}, minmax(0, 280px))` }
+                : undefined
+            }
           >
-            {completedBooks.slice(0, 4).map((book) => (
+            {recentlyFinishedBooks.map((book) => (
               <div
                 key={book.id}
-                className="paper-card"
+                className="recently-finished-card"
                 onClick={() => setSelectedBook(book)}
-                style={{
-                  padding: '0.85rem',
-                  backgroundColor: '#FAF7F2',
-                  border: '1px solid var(--color-border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column'
+                role="button"
+                tabIndex={0}
+                aria-label={`Open details for ${book.title} by ${book.author}`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedBook(book);
+                  }
                 }}
               >
-                <div style={{ marginBottom: '0.75rem' }}>
+                <div className="recently-finished-cover-wrap">
                   <BookCover
                     coverUrl={book.coverUrl}
                     title={book.title}
@@ -564,43 +575,52 @@ export default function Home() {
                   />
                 </div>
 
+                {book.genre && (
+                  <div style={{ marginBottom: '0.35rem' }}>
+                    <span className="book-badge genre-badge" style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }}>
+                      {book.genre}
+                    </span>
+                  </div>
+                )}
+
                 <h4
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.08rem',
-                    fontWeight: 600,
-                    color: 'var(--color-espresso)',
-                    margin: '0 0 0.15rem 0',
-                    lineHeight: 1.2,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
+                  className="recently-finished-title"
+                  title={book.title}
                 >
                   {book.title}
                 </h4>
 
                 <p
-                  style={{
-                    fontStyle: 'italic',
-                    fontSize: '0.8rem',
-                    color: 'var(--color-ink-muted)',
-                    margin: '0 0 0.4rem 0',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
+                  className="recently-finished-author"
+                  title={book.author}
                 >
-                  {book.author}
+                  by {book.author}
                 </p>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', fontSize: '0.74rem', color: 'var(--color-ink-muted)' }}>
-                  <span>{book.dateFinished ? formatDate(book.dateFinished) : 'Completed'}</span>
-                  {book.rating > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#C28B47' }}>
-                      <Star size={11} fill="#C28B47" />
-                      <span>{book.rating}</span>
+                <div className="recently-finished-footer">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Check size={12} strokeWidth={2.4} color="var(--color-olive)" />
+                    <span>{book.dateFinished ? formatDate(book.dateFinished) : 'Completed'}</span>
+                  </div>
+                  {book.rating > 0 ? (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        color: '#C28B47',
+                        fontWeight: 600,
+                        fontSize: '0.78rem'
+                      }}
+                      title={`Rated ${book.rating} out of 5 stars`}
+                    >
+                      <Star size={12} fill="#C28B47" stroke="#C28B47" />
+                      <span>{Number(book.rating).toFixed(book.rating % 1 === 0 ? 0 : 1)}</span>
                     </div>
+                  ) : (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-ink-faint)', fontStyle: 'italic' }}>
+                      Unrated
+                    </span>
                   )}
                 </div>
               </div>
