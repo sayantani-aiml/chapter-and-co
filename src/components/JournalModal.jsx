@@ -100,7 +100,7 @@ export default function JournalModal({ isOpen, onClose, entryToEdit = null }) {
           maxWidth: '620px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-warm)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-paper-lg)',
@@ -211,7 +211,7 @@ export default function JournalModal({ isOpen, onClose, entryToEdit = null }) {
                       border: isSelected
                         ? `1.5px solid ${mood.color}`
                         : '1px solid var(--color-border-warm)',
-                      backgroundColor: isSelected ? mood.bg : '#FFFFFF',
+                      backgroundColor: isSelected ? mood.bg : 'var(--color-paper-card)',
                       color: isSelected ? mood.color : 'var(--color-ink-muted)',
                       boxShadow: isSelected ? 'var(--shadow-paper-sm)' : 'none',
                       transition: 'all var(--transition-fast)'

@@ -7,6 +7,7 @@ import Bookshelf from './pages/Bookshelf';
 import Journal from './pages/Journal';
 import Statistics from './pages/Statistics';
 import Goals from './pages/Goals';
+import Profile from './pages/Profile';
 import BookDetailModal from './components/BookDetailModal';
 import BookModal from './components/BookModal';
 import LogSessionModal from './components/LogSessionModal';
@@ -35,6 +36,8 @@ export default function App() {
         return <Statistics />;
       case 'goals':
         return <Goals />;
+      case 'profile':
+        return <Profile />;
       default:
         return <Home />;
     }

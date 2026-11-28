@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useLibrary } from '../context/LibraryContext';
 import ProgressBar from '../components/ProgressBar';
+import FinishedVolumesShelf from '../components/FinishedVolumesShelf';
 import { calculatePace } from '../utils/statistics';
-import { Target, CheckCircle, Award, Sparkles, BookOpen, Edit2, Check } from 'lucide-react';
+import { Sparkles, Edit2, Check } from 'lucide-react';
 
 export default function Goals() {
-  const { books, goal, setReadingGoal, showToast } = useLibrary();
+  const { books, goal, setReadingGoal, selectedBook, setSelectedBook, showToast } = useLibrary();
 
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(goal);
@@ -31,16 +32,6 @@ export default function Goals() {
       showToast(`Annual reading goal set to ${val} books.`);
     }
   };
-
-  // Color options for bookshelf spines
-  const SPINE_COLORS = [
-    { bg: '#713D46', text: '#FAF7F2', border: '#5C2F37' }, // Burgundy
-    { bg: '#59634F', text: '#FAF7F2', border: '#464E3E' }, // Olive
-    { bg: '#45372F', text: '#FAF7F2', border: '#332822' }, // Dark espresso
-    { bg: '#899581', text: '#2A2724', border: '#74806D' }, // Sage
-    { bg: '#B97861', text: '#FAF7F2', border: '#9A5D48' }, // Terracotta
-    { bg: '#C89D9B', text: '#342F2D', border: '#B28583' }  // Dusty Rose
-  ];
 
   return (
     <div className="goals-page fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
@@ -200,7 +191,7 @@ export default function Goals() {
             {/* Encouraging message */}
             <div
               style={{
-                backgroundColor: 'rgba(237, 228, 213, 0.4)',
+                backgroundColor: 'var(--bg-muted)',
                 padding: '1rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
                 borderLeft: '3px solid var(--color-sage)',
@@ -221,7 +212,7 @@ export default function Goals() {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '2rem',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               borderRadius: '50%',
               width: '210px',
               height: '210px',
@@ -245,151 +236,13 @@ export default function Goals() {
       </section>
 
       {/* Visual Bookshelf of Completed Books This Year */}
-      <section
-        className="paper-card"
-        style={{
-          padding: '2rem 2.25rem',
-          backgroundColor: '#FAF7F2',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-lg)'
-        }}
-      >
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.6rem',
-              color: 'var(--color-espresso)',
-              margin: '0 0 0.2rem 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <BookOpen size={20} color="var(--color-burgundy)" />
-            Your {currentYear} Finished Volumes Shelf
-          </h3>
-          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--color-ink-muted)', margin: 0 }}>
-            Each completed book placed spine-out upon the wooden shelf.
-          </p>
-        </div>
-
-        {/* Physical Bookshelf Representation */}
-        <div
-          style={{
-            backgroundColor: '#FAF7F2',
-            padding: '2rem 1.5rem 0',
-            border: '1px solid var(--color-border-warm)',
-            borderRadius: 'var(--radius-md)',
-            position: 'relative'
-          }}
-        >
-          {/* Spines container */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '6px',
-              minHeight: '190px',
-              overflowX: 'auto',
-              paddingBottom: '0.5rem'
-            }}
-          >
-            {completedThisYear.length > 0 ? (
-              completedThisYear.map((book, idx) => {
-                const spineTheme = SPINE_COLORS[idx % SPINE_COLORS.length];
-                const height = 150 + (idx % 4) * 12; // Realistic slight variation in book height
-
-                return (
-                  <div
-                    key={book.id}
-                    title={`${book.title} by ${book.author}`}
-                    style={{
-                      width: '38px',
-                      height: `${height}px`,
-                      backgroundColor: spineTheme.bg,
-                      color: spineTheme.text,
-                      border: `1px solid ${spineTheme.border}`,
-                      borderRadius: '3px 3px 0 0',
-                      boxShadow: '2px 0 6px rgba(0,0,0,0.2) inset, 2px 2px 5px rgba(0,0,0,0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      position: 'relative',
-                      transition: 'transform var(--transition-fast)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-6px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    {/* Spine embossed gold band top & bottom */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        left: '2px',
-                        right: '2px',
-                        height: '2px',
-                        backgroundColor: 'rgba(255,255,255,0.3)'
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        left: '2px',
-                        right: '2px',
-                        height: '2px',
-                        backgroundColor: 'rgba(255,255,255,0.3)'
-                      }}
-                    />
-
-                    {/* Rotated Spine Title */}
-                    <span
-                      style={{
-                        writingMode: 'vertical-rl',
-                        transform: 'rotate(180deg)',
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: '0.72rem',
-                        letterSpacing: '0.04em',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxHeight: `${height - 30}px`,
-                        padding: '0 2px'
-                      }}
-                    >
-                      {book.title}
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div style={{ textAlign: 'center', width: '100%', padding: '2rem', color: 'var(--color-ink-muted)', fontStyle: 'italic' }}>
-                Your shelf is freshly dusted and awaiting its first completed book of {currentYear}.
-              </div>
-            )}
-          </div>
-
-          {/* Wooden Shelf Bar */}
-          <div
-            style={{
-              height: '16px',
-              backgroundColor: '#5C4B40',
-              borderTop: '2px solid #8B7364',
-              borderRadius: '2px',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.25)',
-              margin: '0 -1.5rem',
-              position: 'relative'
-            }}
-          />
-        </div>
-      </section>
+      <FinishedVolumesShelf
+        books={completedThisYear}
+        allBooks={books}
+        currentYear={currentYear}
+        onSelectBook={setSelectedBook}
+        selectedBook={selectedBook}
+      />
 
       <style>{`
         @media (max-width: 768px) {

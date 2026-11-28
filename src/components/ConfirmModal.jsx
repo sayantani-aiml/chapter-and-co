@@ -35,7 +35,7 @@ export default function ConfirmModal({
           width: '100%',
           maxWidth: '430px',
           padding: '1.75rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-warm)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-paper-lg)',

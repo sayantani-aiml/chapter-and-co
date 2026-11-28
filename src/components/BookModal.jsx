@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLibrary } from '../context/LibraryContext';
 import { GENRE_OPTIONS } from '../data/sampleData';
 import { getTodayDateString } from '../utils/dates';
-import { X, Star, Image, BookOpen, Bookmark } from 'lucide-react';
+import { searchOpenLibrary, mapSubjectToGenre, fetchBookDetails } from '../utils/bookApi';
+import { X, Star, Image, BookOpen, Bookmark, Search, Sparkles, Loader2 } from 'lucide-react';
 
 const PRESET_COVERS = [
   { label: 'Leather Spine', url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80' },
@@ -13,7 +14,7 @@ const PRESET_COVERS = [
 ];
 
 export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
-  const { addBook, updateBook } = useLibrary();
+  const { addBook, updateBook, shelves = [], addCustomShelf } = useLibrary();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -28,10 +29,24 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
     review: '',
     dateStarted: '',
     dateFinished: '',
-    tagsString: ''
+    tagsString: '',
+    shelves: [],
+    series: { name: '', number: '', total: '' }
   });
 
+  const [newShelfInput, setNewShelfInput] = useState('');
+
   const [errors, setErrors] = useState({});
+
+  // Open Library Auto-fill states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [lastSearchedQuery, setLastSearchedQuery] = useState('');
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+  const detailsRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (bookToEdit) {
@@ -48,7 +63,13 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
         review: bookToEdit.review || '',
         dateStarted: bookToEdit.dateStarted || '',
         dateFinished: bookToEdit.dateFinished || '',
-        tagsString: (bookToEdit.tags || []).join(', ')
+        tagsString: (bookToEdit.tags || []).join(', '),
+        shelves: Array.isArray(bookToEdit.shelves) ? bookToEdit.shelves : [],
+        series: {
+          name: bookToEdit.series?.name || '',
+          number: bookToEdit.series?.number !== undefined && bookToEdit.series?.number !== null ? bookToEdit.series.number : '',
+          total: bookToEdit.series?.total !== undefined && bookToEdit.series?.total !== null ? bookToEdit.series.total : ''
+        }
       });
     } else {
       setFormData({
@@ -64,11 +85,120 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
         review: '',
         dateStarted: '',
         dateFinished: '',
-        tagsString: ''
+        tagsString: '',
+        shelves: [],
+        series: { name: '', number: '', total: '' }
       });
     }
+    setNewShelfInput('');
     setErrors({});
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearching(false);
+    setSearchError(null);
+    setHasSearched(false);
+    setLastSearchedQuery('');
+    setIsFetchingDetails(false);
+    detailsRequestIdRef.current += 1;
   }, [bookToEdit, isOpen]);
+
+  const handleSearch = async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+    setHasSearched(false);
+    setLastSearchedQuery(trimmed);
+
+    try {
+      const results = await searchOpenLibrary(trimmed);
+      setSearchResults(results);
+      setHasSearched(true);
+    } catch (err) {
+      console.error('Open Library search failed:', err);
+      setSearchError('Unable to connect to Open Library archives. Please check your connection or fill in details manually.');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectBook = async (selected) => {
+    const selectedGenre = selected.genre || mapSubjectToGenre(selected.subjects || selected.subject);
+
+    setFormData((prev) => ({
+      ...prev,
+      title: selected.title ? selected.title : prev.title,
+      author: selected.author ? selected.author : prev.author,
+      totalPages: (selected.totalPages && Number(selected.totalPages) > 0)
+        ? Number(selected.totalPages)
+        : prev.totalPages,
+      coverUrl: selected.coverUrl ? selected.coverUrl : prev.coverUrl,
+      genre: selectedGenre ? selectedGenre : prev.genre
+    }));
+
+    setErrors((prevErrors) => {
+      const updated = { ...prevErrors };
+      if (selected.title) delete updated.title;
+      if (selected.author) delete updated.author;
+      if (selected.totalPages) delete updated.totalPages;
+      return updated;
+    });
+
+    setSearchResults([]);
+    setHasSearched(false);
+    setSearchError(null);
+
+    const requestId = ++detailsRequestIdRef.current;
+    setIsFetchingDetails(true);
+
+    try {
+      const details = await fetchBookDetails(selected);
+      if (detailsRequestIdRef.current !== requestId || !details) return;
+
+      setFormData((prev) => {
+        const nextDescription =
+          !prev.description.trim() && details.description
+            ? details.description
+            : prev.description;
+
+        const nextSeriesName =
+          !prev.series.name.trim() && details.seriesName
+            ? details.seriesName
+            : prev.series.name;
+
+        const hasExistingNumber =
+          prev.series.number !== '' &&
+          prev.series.number !== null &&
+          prev.series.number !== undefined;
+        const hasFetchedNumber =
+          details.seriesNumber !== '' &&
+          details.seriesNumber !== null &&
+          details.seriesNumber !== undefined;
+        const nextSeriesNumber =
+          !hasExistingNumber && hasFetchedNumber
+            ? String(details.seriesNumber)
+            : prev.series.number;
+
+        return {
+          ...prev,
+          description: nextDescription,
+          series: {
+            ...prev.series,
+            name: nextSeriesName,
+            number: nextSeriesNumber
+          }
+        };
+      });
+    } catch {
+      // Silently ignore detail fetch errors so basic auto-fill remains intact
+    } finally {
+      if (detailsRequestIdRef.current === requestId) {
+        setIsFetchingDetails(false);
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -118,7 +248,16 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
       review: formData.review.trim(),
       dateStarted: formData.dateStarted,
       dateFinished: formData.dateFinished,
-      tags
+      tags,
+      shelves: formData.shelves,
+      series: formData.series.name.trim()
+        ? {
+            name: formData.series.name.trim(),
+            number: formData.series.number !== '' ? Number(formData.series.number) || formData.series.number : '',
+            total: formData.series.total !== '' ? Number(formData.series.total) || formData.series.total : ''
+          }
+        : null,
+      rereads: bookToEdit?.rereads || []
     };
 
     // Auto-complete rules
@@ -151,6 +290,34 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
+  const toggleShelf = (shelfName) => {
+    setFormData((prev) => {
+      const exists = prev.shelves.includes(shelfName);
+      return {
+        ...prev,
+        shelves: exists
+          ? prev.shelves.filter((s) => s !== shelfName)
+          : [...prev.shelves, shelfName]
+      };
+    });
+  };
+
+  const handleAddNewShelf = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = newShelfInput.trim();
+    if (!trimmed) return;
+    if (!shelves.includes(trimmed)) {
+      addCustomShelf(trimmed);
+    }
+    if (!formData.shelves.includes(trimmed)) {
+      setFormData((prev) => ({
+        ...prev,
+        shelves: [...prev.shelves, trimmed]
+      }));
+    }
+    setNewShelfInput('');
+  };
+
   return (
     <div
       style={{
@@ -174,7 +341,7 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
           maxWidth: '680px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-warm)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-paper-lg)',
@@ -222,6 +389,282 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
           </button>
         </div>
 
+        {/* Auto-fill Metadata by Title or ISBN (Add Mode Only) */}
+        {!bookToEdit && (
+          <div className="book-lookup-box">
+            <div className="book-lookup-header">
+              <label htmlFor="open-library-lookup" className="book-lookup-title">
+                <Sparkles size={14} style={{ color: 'var(--color-burgundy)' }} />
+                Auto-fill by Title or ISBN
+              </label>
+              <span className="book-lookup-subtitle">
+                Powered by Open Library archives
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  id="open-library-lookup"
+                  type="text"
+                  className="form-input"
+                  style={{ paddingLeft: '2.25rem', paddingRight: searchQuery ? '2rem' : '0.85rem' }}
+                  placeholder="e.g. Pride and Prejudice, The Hobbit, or 9780141439518..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (searchError) setSearchError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSearch();
+                    }
+                  }}
+                />
+                <Search
+                  size={15}
+                  style={{
+                    position: 'absolute',
+                    left: '0.8rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--color-ink-faint)',
+                    pointerEvents: 'none'
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      setHasSearched(false);
+                      setSearchError(null);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '0.6rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      padding: '0.2rem',
+                      color: 'var(--color-ink-faint)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+                className="btn-primary"
+                style={{
+                  padding: '0.6rem 1.15rem',
+                  fontSize: '0.84rem',
+                  whiteSpace: 'nowrap',
+                  opacity: (isSearching || !searchQuery.trim()) ? 0.65 : 1,
+                  cursor: (isSearching || !searchQuery.trim()) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Searching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search size={15} />
+                    <span>Search</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Loading State */}
+            {isSearching && (
+              <div className="book-lookup-loading">
+                <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-burgundy)' }} />
+                <span>Consulting the Open Library archives...</span>
+              </div>
+            )}
+
+            {/* Extended Details Loading Indicator */}
+            {!isSearching && isFetchingDetails && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  marginTop: '0.55rem',
+                  fontSize: '0.8rem',
+                  fontFamily: 'var(--font-serif)',
+                  fontStyle: 'italic',
+                  color: 'var(--color-ink-muted)'
+                }}
+              >
+                <Loader2 size={13} className="animate-spin" style={{ color: 'var(--color-burgundy)' }} />
+                <span>Fetching synopsis &amp; series info...</span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {!isSearching && searchError && (
+              <div className="book-lookup-error">
+                <span>{searchError}</span>
+                <button
+                  type="button"
+                  onClick={() => setSearchError(null)}
+                  style={{ color: 'var(--color-espresso-light)', padding: '0.2rem', cursor: 'pointer' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Empty Results State */}
+            {!isSearching && hasSearched && !searchError && searchResults.length === 0 && (
+              <div className="book-lookup-empty">
+                No matching volumes found for &ldquo;{lastSearchedQuery}&rdquo;. You may continue by entering the book details below.
+              </div>
+            )}
+
+            {/* Search Results Dropdown List */}
+            {!isSearching && searchResults.length > 0 && (
+              <div className="book-search-dropdown">
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.5rem 0.85rem',
+                  backgroundColor: 'var(--color-antique-paper)',
+                  borderBottom: '1px solid var(--color-border-subtle)',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--color-espresso)'
+                }}>
+                  <span>Found {searchResults.length} Edition{searchResults.length === 1 ? '' : 's'} &bull; Click to Auto-fill</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchResults([])}
+                    style={{ fontSize: '0.72rem', color: 'var(--color-ink-muted)', cursor: 'pointer' }}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+
+                <div>
+                  {searchResults.map((book) => (
+                    <div
+                      key={book.id}
+                      onClick={() => handleSelectBook(book)}
+                      className="book-search-result-row"
+                    >
+                      {/* Thumbnail Cover */}
+                      <div style={{
+                        width: '36px',
+                        height: '50px',
+                        flexShrink: 0,
+                        borderRadius: '2px',
+                        overflow: 'hidden',
+                        backgroundColor: 'var(--color-antique-paper)',
+                        border: '1px solid var(--color-border-warm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                      }}>
+                        {book.coverUrl ? (
+                          <img
+                            src={book.coverUrl}
+                            alt={book.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <BookOpen size={16} style={{ color: 'var(--color-ink-faint)' }} />
+                        )}
+                      </div>
+
+                      {/* Metadata Details */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontFamily: 'var(--font-serif)',
+                          fontWeight: 600,
+                          fontSize: '0.96rem',
+                          color: 'var(--color-espresso)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {book.title || 'Untitled'}
+                        </div>
+                        <div style={{
+                          fontFamily: 'var(--font-serif)',
+                          fontStyle: 'italic',
+                          fontSize: '0.84rem',
+                          color: 'var(--color-ink-muted)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {book.author ? `by ${book.author}` : 'Unknown Author'}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          marginTop: '0.2rem',
+                          fontSize: '0.74rem',
+                          color: 'var(--color-ink-faint)',
+                          flexWrap: 'wrap'
+                        }}>
+                          {book.publishYear && (
+                            <span>{book.publishYear}</span>
+                          )}
+                          {book.totalPages && (
+                            <span>&bull; {book.totalPages} pages</span>
+                          )}
+                          {book.genre && (
+                            <span className="book-badge genre-badge" style={{ padding: '0.1rem 0.4rem', fontSize: '0.68rem' }}>
+                              {book.genre}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick fill button */}
+                      <span
+                        className="btn-outline"
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.25rem 0.55rem',
+                          flexShrink: 0,
+                          color: 'var(--color-burgundy)',
+                          borderColor: 'var(--color-burgundy-light)'
+                        }}
+                      >
+                        Auto-fill
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
@@ -265,6 +708,51 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Series Tracking (Optional) */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Series (Optional)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.75rem' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Series Name (e.g. The Lord of the Rings)"
+                  value={formData.series.name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      series: { ...prev.series, name: e.target.value }
+                    }))
+                  }
+                />
+                <input
+                  type="number"
+                  min="1"
+                  className="form-input"
+                  placeholder="Book #"
+                  value={formData.series.number}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      series: { ...prev.series, number: e.target.value }
+                    }))
+                  }
+                />
+                <input
+                  type="number"
+                  min="1"
+                  className="form-input"
+                  placeholder="Total in Series"
+                  value={formData.series.total}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      series: { ...prev.series, total: e.target.value }
+                    }))
+                  }
+                />
+              </div>
             </div>
 
             {/* Cover Image URL */}
@@ -387,6 +875,72 @@ export default function BookModal({ isOpen, onClose, bookToEdit = null }) {
                 value={formData.dateFinished}
                 onChange={(e) => setFormData({ ...formData, dateFinished: e.target.value })}
               />
+            </div>
+
+            {/* Custom Shelves */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ margin: 0 }}>Custom Shelves</label>
+                <span className="form-hint">Assign to your curated collections</span>
+              </div>
+
+              {/* Shelf Pills */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.65rem' }}>
+                {shelves.map((shelf) => {
+                  const isSelected = formData.shelves.includes(shelf);
+                  return (
+                    <button
+                      key={shelf}
+                      type="button"
+                      onClick={() => toggleShelf(shelf)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '999px',
+                        fontSize: '0.78rem',
+                        fontWeight: isSelected ? 600 : 400,
+                        backgroundColor: isSelected ? 'var(--color-burgundy)' : 'var(--color-antique-paper)',
+                        color: isSelected ? '#FAF7F2' : 'var(--color-espresso)',
+                        border: isSelected
+                          ? '1px solid var(--color-burgundy)'
+                          : '1px solid var(--color-border-warm)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)'
+                      }}
+                    >
+                      <span>{isSelected ? '✓ ' : '+ '}{shelf}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Add New Shelf Inline */}
+              <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '340px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="New shelf name..."
+                  value={newShelfInput}
+                  onChange={(e) => setNewShelfInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddNewShelf();
+                    }
+                  }}
+                  style={{ fontSize: '0.82rem', padding: '0.35rem 0.65rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNewShelf}
+                  className="btn-outline"
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', flexShrink: 0 }}
+                >
+                  + Add
+                </button>
+              </div>
             </div>
 
             {/* Tags */}

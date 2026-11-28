@@ -16,7 +16,8 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
-  Bookmark
+  Bookmark,
+  RotateCcw
 } from 'lucide-react';
 
 export default function BookDetailModal({ book, onClose, onEdit }) {
@@ -26,6 +27,8 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
     deleteBook,
     addQuoteToBook,
     deleteQuoteFromBook,
+    addRereadToBook,
+    deleteRereadFromBook,
     setIsLogSessionModalOpen,
     setSessionTargetBook,
     setActiveTab
@@ -39,6 +42,13 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
 
   const [isEditingReview, setIsEditingReview] = useState(false);
   const [reviewDraft, setReviewDraft] = useState(book?.review || '');
+
+  // Reread form state
+  const [isAddingReread, setIsAddingReread] = useState(false);
+  const [rereadStartDate, setRereadStartDate] = useState('');
+  const [rereadFinishDate, setRereadFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [rereadRating, setRereadRating] = useState(0);
+  const [rereadNote, setRereadNote] = useState('');
 
   if (!book) return null;
 
@@ -58,6 +68,21 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
   const handleSaveReview = () => {
     updateBook(book.id, { review: reviewDraft.trim() });
     setIsEditingReview(false);
+  };
+
+  const handleAddRereadSubmit = (e) => {
+    e.preventDefault();
+    addRereadToBook(book.id, {
+      startDate: rereadStartDate,
+      finishDate: rereadFinishDate || new Date().toISOString().slice(0, 10),
+      rating: rereadRating,
+      note: rereadNote.trim()
+    });
+    setRereadStartDate('');
+    setRereadFinishDate(new Date().toISOString().slice(0, 10));
+    setRereadRating(0);
+    setRereadNote('');
+    setIsAddingReread(false);
   };
 
   const handleAddQuoteSubmit = (e) => {
@@ -109,7 +134,7 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
             maxWidth: '820px',
             maxHeight: '90vh',
             overflowY: 'auto',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-warm)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-paper-lg)',
@@ -129,11 +154,36 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
               paddingBottom: '0.75rem'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
               <span className={`book-badge status-${book.status}`}>
                 {book.status.replace('-', ' ')}
               </span>
               {book.genre && <span className="book-badge genre-badge">{book.genre}</span>}
+              {book.series?.name && (
+                <span
+                  className="book-badge"
+                  style={{
+                    backgroundColor: 'var(--color-antique-paper)',
+                    color: 'var(--color-burgundy)',
+                    borderColor: 'var(--color-border-warm)'
+                  }}
+                >
+                  Series: {book.series.name} #{book.series.number || 1}{book.series.total ? ` of ${book.series.total}` : ''}
+                </span>
+              )}
+              {Array.isArray(book.shelves) && book.shelves.map((shelf) => (
+                <span
+                  key={shelf}
+                  className="book-badge"
+                  style={{
+                    backgroundColor: 'var(--color-parchment)',
+                    borderColor: 'var(--color-border-warm)',
+                    color: 'var(--color-espresso)'
+                  }}
+                >
+                  📁 {shelf}
+                </span>
+              ))}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -196,10 +246,10 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
               {/* Progress Slider */}
               <div
                 style={{
-                  backgroundColor: 'rgba(237, 228, 213, 0.45)',
+                  backgroundColor: 'var(--bg-elevated)',
                   padding: '1rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-border-subtle)'
+                  border: '1px solid var(--color-border-warm)'
                 }}
               >
                 <div
@@ -234,7 +284,7 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
                     marginTop: '0.65rem'
                   }}
                 >
-                  <span style={{ fontSize: '0.82rem', color: 'var(--color-ink-muted)' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--color-espresso)' }}>
                     Page <strong>{current}</strong> of <strong>{total}</strong>
                   </span>
                 </div>
@@ -333,7 +383,8 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
                   flexWrap: 'wrap',
                   gap: '1rem',
                   padding: '0.85rem 1rem',
-                  backgroundColor: 'rgba(237, 228, 213, 0.3)',
+                  backgroundColor: 'var(--bg-elevated)',
+                  border: '1px solid var(--color-border-warm)',
                   borderRadius: 'var(--radius-sm)',
                   marginBottom: '1.25rem',
                   fontSize: '0.82rem',
@@ -341,20 +392,20 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
                 }}
               >
                 <div>
-                  <span style={{ color: 'var(--color-ink-faint)', marginRight: '0.35rem' }}>Length:</span>
+                  <span style={{ color: 'var(--color-ink-muted)', marginRight: '0.35rem' }}>Length:</span>
                   <strong style={{ color: 'var(--color-espresso)' }}>{total} pages</strong>
                 </div>
 
                 {book.dateStarted && (
                   <div>
-                    <span style={{ color: 'var(--color-ink-faint)', marginRight: '0.35rem' }}>Started:</span>
+                    <span style={{ color: 'var(--color-ink-muted)', marginRight: '0.35rem' }}>Started:</span>
                     <strong style={{ color: 'var(--color-espresso)' }}>{formatDate(book.dateStarted)}</strong>
                   </div>
                 )}
 
                 {book.dateFinished && (
                   <div>
-                    <span style={{ color: 'var(--color-ink-faint)', marginRight: '0.35rem' }}>Finished:</span>
+                    <span style={{ color: 'var(--color-ink-muted)', marginRight: '0.35rem' }}>Finished:</span>
                     <strong style={{ color: 'var(--color-espresso)' }}>{formatDate(book.dateFinished)}</strong>
                   </div>
                 )}
@@ -449,7 +500,7 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
             </div>
 
             {isEditingReview ? (
-              <div style={{ backgroundColor: '#FAF7F2', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-warm)' }}>
+              <div style={{ backgroundColor: 'var(--color-antique-paper)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-warm)' }}>
                 <textarea
                   className="form-textarea"
                   rows="4"
@@ -473,7 +524,7 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
                   fontSize: '1.05rem',
                   lineHeight: 1.65,
                   color: 'var(--color-espresso)',
-                  backgroundColor: 'rgba(237, 228, 213, 0.35)',
+                  backgroundColor: 'var(--bg-muted)',
                   padding: '1.25rem 1.5rem',
                   borderRadius: 'var(--radius-sm)',
                   borderLeft: '3px solid var(--color-burgundy)',
@@ -488,6 +539,234 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
               </p>
             )}
           </section>
+
+          {/* Ornamental Divider */}
+          <div className="ornamental-divider">
+            <span className="ornamental-divider-motif">❦</span>
+          </div>
+
+          {/* Read-Through History Section */}
+          <section style={{ marginBottom: '2rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem'
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.35rem',
+                  color: 'var(--color-espresso)',
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <RotateCcw size={18} color="var(--color-burgundy)" />
+                Read-Through History ({1 + (book.rereads ? book.rereads.length : 0)})
+              </h3>
+
+              {!isAddingReread && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingReread(true)}
+                  className="btn-outline"
+                  style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
+                >
+                  <Plus size={13} />
+                  Log Reread
+                </button>
+              )}
+            </div>
+
+            {/* Log Reread Subform */}
+            {isAddingReread && (
+              <form
+                onSubmit={handleAddRereadSubmit}
+                style={{
+                  backgroundColor: 'var(--color-antique-paper)',
+                  padding: '1.25rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-border-warm)',
+                  marginBottom: '1.25rem'
+                }}
+              >
+                <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', color: 'var(--color-espresso)', margin: '0 0 0.85rem' }}>
+                  Log a New Read-Through
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Start Date</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={rereadStartDate}
+                      onChange={(e) => setRereadStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Finish Date *</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={rereadFinishDate}
+                      onChange={(e) => setRereadFinishDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div style={{ marginBottom: '0.85rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Reread Rating (Optional)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRereadRating(star === rereadRating ? 0 : star)}
+                        style={{ padding: '0.2rem', color: star <= rereadRating ? '#C28B47' : 'var(--color-border-warm)' }}
+                      >
+                        <Star
+                          size={18}
+                          fill={star <= rereadRating ? '#C28B47' : 'none'}
+                          stroke={star <= rereadRating ? '#C28B47' : 'var(--color-border-dark)'}
+                        />
+                      </button>
+                    ))}
+                    {rereadRating > 0 && (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--color-espresso)', marginLeft: '0.4rem', fontWeight: 600 }}>
+                        {rereadRating} Star{rereadRating === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Reread Notes / Reflections (Optional)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Loved it even more the second time; noticed subtle foreshadowing..."
+                    value={rereadNote}
+                    onChange={(e) => setRereadNote(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingReread(false)}
+                    className="btn-secondary"
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                  >
+                    Save Reread
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Read-through List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {/* Original Reading */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.85rem 1.15rem',
+                  backgroundColor: 'var(--color-paper-light)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 'var(--radius-sm)'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--color-espresso)' }}>
+                      1st Read-Through (Original)
+                    </span>
+                    {book.rating > 0 && (
+                      <span style={{ fontSize: '0.76rem', color: '#C28B47', fontWeight: 600 }}>
+                        ★ {book.rating}/5
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--color-ink-muted)' }}>
+                    {book.dateStarted ? `Started ${formatDate(book.dateStarted)}` : 'Start unrecorded'}
+                    {book.dateFinished ? ` · Finished ${formatDate(book.dateFinished)}` : (book.status === 'completed' ? ' · Finished' : ' · In Progress')}
+                  </div>
+                </div>
+                <span className="book-badge" style={{ backgroundColor: 'var(--color-antique-paper)', fontSize: '0.72rem' }}>
+                  Original
+                </span>
+              </div>
+
+              {/* Rereads */}
+              {Array.isArray(book.rereads) && book.rereads.map((reread, idx) => (
+                <div
+                  key={reread.id || idx}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.85rem 1.15rem',
+                    backgroundColor: 'var(--color-paper-light)',
+                    border: '1px solid var(--color-border-subtle)',
+                    borderRadius: 'var(--radius-sm)'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--color-espresso)' }}>
+                        Reread #{book.rereads.length - idx}
+                      </span>
+                      {reread.rating > 0 && (
+                        <span style={{ fontSize: '0.76rem', color: '#C28B47', fontWeight: 600 }}>
+                          ★ {reread.rating}/5
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-ink-muted)' }}>
+                      {reread.startDate ? `Started ${formatDate(reread.startDate)} · ` : ''}
+                      Finished {formatDate(reread.finishDate)}
+                    </div>
+                    {reread.note && (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--color-espresso)', fontStyle: 'italic', marginTop: '0.25rem' }}>
+                        "{reread.note}"
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteRereadFromBook(book.id, reread.id)}
+                    className="btn-ghost"
+                    style={{ padding: '0.3rem', color: 'var(--color-ink-faint)' }}
+                    title="Remove reread entry"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Ornamental Divider */}
+          <div className="ornamental-divider">
+            <span className="ornamental-divider-motif">❦</span>
+          </div>
 
           {/* Favourite Quotes Section */}
           <section>
@@ -532,7 +811,7 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
               <form
                 onSubmit={handleAddQuoteSubmit}
                 style={{
-                  backgroundColor: '#FAF7F2',
+                  backgroundColor: 'var(--color-antique-paper)',
                   padding: '1.25rem',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--color-border-warm)',
@@ -596,17 +875,17 @@ export default function BookDetailModal({ book, onClose, onEdit }) {
             {book.quotes && book.quotes.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {book.quotes.map((q) => (
-                  <div
-                    key={q.id}
-                    className="paper-card"
-                    style={{
-                      padding: '1.15rem 1.4rem',
-                      backgroundColor: '#FAF7F2',
-                      border: '1px solid var(--color-border-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                      position: 'relative'
-                    }}
-                  >
+                    <div
+                      key={q.id}
+                      className="paper-card"
+                      style={{
+                        padding: '1.15rem 1.4rem',
+                        backgroundColor: 'var(--color-paper-light)',
+                        border: '1px solid var(--color-border-subtle)',
+                        borderRadius: 'var(--radius-sm)',
+                        position: 'relative'
+                      }}
+                    >
                     <p
                       style={{
                         fontFamily: 'var(--font-serif)',

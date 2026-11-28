@@ -72,7 +72,7 @@ export default function LogSessionModal() {
         style={{
           width: '100%',
           maxWidth: '460px',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-warm)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-paper-lg)',

@@ -2,7 +2,8 @@ import {
   INITIAL_BOOKS,
   INITIAL_JOURNAL_ENTRIES,
   INITIAL_READING_SESSIONS,
-  INITIAL_ANNUAL_GOAL
+  INITIAL_ANNUAL_GOAL,
+  DEFAULT_PROFILE
 } from '../data/sampleData';
 
 const STORAGE_KEYS = {
@@ -10,8 +11,16 @@ const STORAGE_KEYS = {
   JOURNAL: 'chapter_co_journal',
   SESSIONS: 'chapter_co_sessions',
   GOAL: 'chapter_co_goal',
-  USER_PROFILE: 'chapter_co_profile'
+  USER_PROFILE: 'chapter_co_profile',
+  THEME: 'chapter_co_theme',
+  SHELVES: 'chapter_co_shelves'
 };
+
+export const INITIAL_SHELVES = [
+  'All-Time Favorites',
+  'Rainy Day Reads',
+  'Cozy Autumn'
+];
 
 export function loadStoredData(key, fallback) {
   try {
@@ -34,22 +43,42 @@ export function saveStoredData(key, data) {
 }
 
 export function getInitialLibraryState() {
-  const books = loadStoredData(STORAGE_KEYS.BOOKS, INITIAL_BOOKS);
+  const rawBooks = loadStoredData(STORAGE_KEYS.BOOKS, INITIAL_BOOKS);
+  const books = Array.isArray(rawBooks)
+    ? rawBooks.map((b) => ({
+        ...b,
+        shelves: Array.isArray(b.shelves) ? b.shelves : [],
+        series: b.series && typeof b.series === 'object' ? b.series : null,
+        rereads: Array.isArray(b.rereads) ? b.rereads : []
+      }))
+    : INITIAL_BOOKS;
+
   const journal = loadStoredData(STORAGE_KEYS.JOURNAL, INITIAL_JOURNAL_ENTRIES);
   const sessions = loadStoredData(STORAGE_KEYS.SESSIONS, INITIAL_READING_SESSIONS);
   const goal = loadStoredData(STORAGE_KEYS.GOAL, INITIAL_ANNUAL_GOAL);
-  const profile = loadStoredData(STORAGE_KEYS.USER_PROFILE, {
-    name: 'Eleanor Vance',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    favoriteBookstore: 'Shakespeare & Company'
-  });
+  
+  const rawShelves = loadStoredData(STORAGE_KEYS.SHELVES, INITIAL_SHELVES);
+  const shelves = Array.isArray(rawShelves) ? rawShelves : INITIAL_SHELVES;
 
-  return { books, journal, sessions, goal, profile };
+  const storedProfile = loadStoredData(STORAGE_KEYS.USER_PROFILE, DEFAULT_PROFILE);
+  const profile = {
+    ...DEFAULT_PROFILE,
+    ...storedProfile,
+    readingPersonality: {
+      ...DEFAULT_PROFILE.readingPersonality,
+      ...(storedProfile?.readingPersonality || {})
+    },
+    favourites: Array.isArray(storedProfile?.favourites) && storedProfile.favourites.length > 0
+      ? storedProfile.favourites
+      : DEFAULT_PROFILE.favourites
+  };
+
+  return { books, journal, sessions, goal, profile, shelves };
 }
 
 export function exportLibraryAsJSON(state) {
   const payload = {
-    version: '1.0.0',
+    version: '1.1.0',
     exportDate: new Date().toISOString(),
     appName: 'Chapter & Co.',
     data: {
@@ -57,7 +86,8 @@ export function exportLibraryAsJSON(state) {
       journal: state.journal,
       sessions: state.sessions,
       goal: state.goal,
-      profile: state.profile
+      profile: state.profile,
+      shelves: state.shelves || INITIAL_SHELVES
     }
   };
 
@@ -84,18 +114,35 @@ export function validateImportedJSON(parsedJson) {
   }
 
   // Validate books structure
-  data.books.forEach((b, idx) => {
+  const books = data.books.map((b, idx) => {
     if (!b.title || !b.author) {
       throw new Error(`Book at position ${idx + 1} is missing a title or author.`);
     }
+    return {
+      ...b,
+      shelves: Array.isArray(b.shelves) ? b.shelves : [],
+      series: b.series && typeof b.series === 'object' ? b.series : null,
+      rereads: Array.isArray(b.rereads) ? b.rereads : []
+    };
   });
 
   return {
-    books: data.books,
+    books,
     journal: Array.isArray(data.journal) ? data.journal : [],
     sessions: Array.isArray(data.sessions) ? data.sessions : [],
     goal: typeof data.goal === 'number' ? data.goal : INITIAL_ANNUAL_GOAL,
-    profile: data.profile || { name: 'Book Lover' }
+    shelves: Array.isArray(data.shelves) ? data.shelves : INITIAL_SHELVES,
+    profile: {
+      ...DEFAULT_PROFILE,
+      ...(data.profile || {}),
+      readingPersonality: {
+        ...DEFAULT_PROFILE.readingPersonality,
+        ...(data.profile?.readingPersonality || {})
+      },
+      favourites: Array.isArray(data.profile?.favourites) && data.profile.favourites.length > 0
+        ? data.profile.favourites
+        : DEFAULT_PROFILE.favourites
+    }
   };
 }
 
@@ -105,6 +152,7 @@ export function clearAllLibraryStorage() {
   localStorage.removeItem(STORAGE_KEYS.SESSIONS);
   localStorage.removeItem(STORAGE_KEYS.GOAL);
   localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+  localStorage.removeItem(STORAGE_KEYS.SHELVES);
 }
 
 export { STORAGE_KEYS };

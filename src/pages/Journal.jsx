@@ -178,7 +178,7 @@ export default function Journal() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.84rem',
                 fontWeight: activeSubTab === 'entries' ? 600 : 400,
-                backgroundColor: activeSubTab === 'entries' ? '#FFFFFF' : 'transparent',
+                backgroundColor: activeSubTab === 'entries' ? 'var(--color-paper-card)' : 'transparent',
                 color: activeSubTab === 'entries' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
                 boxShadow: activeSubTab === 'entries' ? 'var(--shadow-paper-sm)' : 'none'
               }}
@@ -198,7 +198,7 @@ export default function Journal() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.84rem',
                 fontWeight: activeSubTab === 'quotes' ? 600 : 400,
-                backgroundColor: activeSubTab === 'quotes' ? '#FFFFFF' : 'transparent',
+                backgroundColor: activeSubTab === 'quotes' ? 'var(--color-paper-card)' : 'transparent',
                 color: activeSubTab === 'quotes' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
                 boxShadow: activeSubTab === 'quotes' ? 'var(--shadow-paper-sm)' : 'none'
               }}
@@ -230,7 +230,7 @@ export default function Journal() {
         className="paper-card"
         style={{
           padding: '1rem 1.25rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-subtle)',
           borderRadius: 'var(--radius-md)',
           display: 'flex',
@@ -317,7 +317,7 @@ export default function Journal() {
                   className="paper-card"
                   style={{
                     padding: '1.75rem 2rem',
-                    backgroundColor: '#FAF7F2',
+                    backgroundColor: 'var(--color-paper-light)',
                     border: '1px solid var(--color-border-subtle)',
                     borderRadius: 'var(--radius-md)',
                     borderLeft: `4px solid ${getMoodColor(entry.mood)}`
@@ -484,7 +484,7 @@ export default function Journal() {
                   className="paper-card"
                   style={{
                     padding: '1.5rem',
-                    backgroundColor: '#FAF7F2',
+                    backgroundColor: 'var(--color-paper-light)',
                     border: '1px solid var(--color-border-subtle)',
                     borderRadius: 'var(--radius-md)',
                     display: 'flex',

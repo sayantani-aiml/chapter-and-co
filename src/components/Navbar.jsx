@@ -9,11 +9,14 @@ import {
   Plus,
   Menu,
   X,
-  BookMarked
+  BookMarked,
+  User,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { activeTab, setActiveTab, setIsAddBookModalOpen } = useLibrary();
+  const { activeTab, setActiveTab, setIsAddBookModalOpen, theme, toggleTheme } = useLibrary();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -21,7 +24,8 @@ export default function Navbar() {
     { id: 'bookshelf', label: 'Bookshelf', icon: BookOpen },
     { id: 'journal', label: 'Journal', icon: Feather },
     { id: 'statistics', label: 'Stats', icon: BarChart2 },
-    { id: 'goals', label: 'Goals', icon: Target }
+    { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'profile', label: 'Profile', icon: User }
   ];
 
   return (
@@ -34,7 +38,7 @@ export default function Navbar() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.85rem 1.25rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           borderBottom: '1px solid var(--color-border-subtle)',
           position: 'sticky',
           top: 0,
@@ -68,7 +72,23 @@ export default function Navbar() {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          {/* Candlelight Mode Quick Icon Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="btn-ghost"
+            style={{ padding: '0.4rem' }}
+            title={theme === 'dark' ? 'Switch to Daybreak Mode' : 'Switch to Candlelight Mode'}
+            aria-label="Toggle Candlelight Mode"
+          >
+            {theme === 'dark' ? (
+              <Sun size={20} style={{ color: '#D4917B' }} />
+            ) : (
+              <Moon size={20} style={{ color: 'var(--color-burgundy)' }} />
+            )}
+          </button>
+
           <button
             type="button"
             onClick={() => setIsAddBookModalOpen(true)}
@@ -98,15 +118,15 @@ export default function Navbar() {
             position: 'fixed',
             inset: 0,
             top: '57px',
-            backgroundColor: 'rgba(48, 45, 41, 0.4)',
+            backgroundColor: 'rgba(28, 22, 20, 0.55)',
             zIndex: 55,
-            backdropFilter: 'blur(2px)'
+            backdropFilter: 'blur(3px)'
           }}
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
             style={{
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               borderBottom: '1px solid var(--color-border-warm)',
               padding: '1.25rem',
               display: 'flex',
@@ -146,6 +166,48 @@ export default function Navbar() {
                 </button>
               );
             })}
+
+            {/* Candlelight Mode Drawer Button */}
+            <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '0.75rem', marginTop: '0.35rem' }}>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: theme === 'dark' ? 'rgba(201, 122, 132, 0.12)' : 'var(--color-antique-paper)',
+                  border: '1px solid var(--color-border-warm)',
+                  color: 'var(--color-espresso)',
+                  fontSize: '0.94rem',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {theme === 'dark' ? (
+                    <Sun size={20} style={{ color: '#D4917B' }} />
+                  ) : (
+                    <Moon size={20} style={{ color: 'var(--color-burgundy)' }} />
+                  )}
+                  <span>Candlelight Mode</span>
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: theme === 'dark' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
+                    fontWeight: 600
+                  }}
+                >
+                  {theme === 'dark' ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -159,7 +221,7 @@ export default function Navbar() {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           borderTop: '1px solid var(--color-border-subtle)',
           padding: '0.4rem 0.5rem',
           zIndex: 60,
@@ -179,16 +241,20 @@ export default function Navbar() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '0.2rem',
-                padding: '0.35rem 0.6rem',
+                gap: '0.15rem',
+                padding: '0.3rem 0.25rem',
                 borderRadius: '4px',
                 color: isActive ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
-                fontSize: '0.68rem',
-                fontWeight: isActive ? 600 : 400
+                fontSize: '0.66rem',
+                fontWeight: isActive ? 600 : 400,
+                flex: 1,
+                minWidth: 0
               }}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.2 : 1.7} />
-              <span>{item.label}</span>
+              <Icon size={17} strokeWidth={isActive ? 2.2 : 1.7} />
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                {item.label}
+              </span>
             </button>
           );
         })}

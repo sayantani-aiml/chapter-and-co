@@ -1,5 +1,5 @@
 :root {
-  /* Brand Palette */
+  /* Brand Palette (Daybreak / Light Parchment Mode) */
   --color-parchment: #F6F1E7;
   --color-antique-paper: #EDE4D5;
   --color-paper-light: #FAF7F2;
@@ -24,6 +24,30 @@
   --color-ink-muted: #6B645D;
   --color-ink-faint: #9A928A;
 
+  /* Heatmap activity levels */
+  --color-heatmap-0: var(--color-antique-paper);
+  --color-heatmap-1: #CFD9CA;
+  --color-heatmap-2: var(--color-sage);
+  --color-heatmap-3: var(--color-olive);
+
+  /* Reading Streak Amber Tokens */
+  --color-amber: #C28B47;
+  --color-amber-light: #FDF6E9;
+
+  /* Genre Pill Tokens (Daybreak Mode) */
+  --color-badge-genre-bg: rgba(237, 228, 213, 0.6);
+  --color-badge-genre-text: var(--color-espresso-light);
+  --color-badge-genre-border: var(--color-border-subtle);
+
+  /* Semantic Surface Tokens (Daybreak Mode) */
+  --bg-elevated: #FAF7F2;
+  --bg-secondary: rgba(237, 228, 213, 0.45);
+  --bg-muted: rgba(237, 228, 213, 0.35);
+  --bg-subtle: rgba(237, 228, 213, 0.3);
+  --bg-hover: rgba(237, 228, 213, 0.5);
+  --bg-input: var(--color-paper-card);
+  --bg-badge: var(--color-antique-paper);
+
   /* Typography */
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-display: 'Playfair Display', Georgia, serif;
@@ -46,4 +70,70 @@
   --transition-fast: 150ms ease;
   --transition-base: 220ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-slow: 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Candlelight Mode (Warm Dark Reading Theme) */
+[data-theme="dark"] {
+  /* Background: deep espresso / roasted coffee */
+  --color-parchment: #1C1614;
+  --color-antique-paper: #241C19;
+
+  /* Cards & Modals: warm dark walnut */
+  --color-paper-light: #2A211E;
+  --color-paper-card: #332824;
+
+  /* Borders: subtle warm borders */
+  --color-border-subtle: #352924;
+  --color-border-warm: #3E312B;
+  --color-border-dark: #5A4840;
+
+  /* Text: soft antique cream & muted warm taupe */
+  --color-espresso: #EFE6D8;
+  --color-espresso-light: #D6C8B7;
+  --color-ink: #E8DFC8;
+  --color-ink-muted: #B5A596;
+  --color-ink-faint: #8A7B6E;
+
+  /* Accents: warm burgundy/rose & muted sage adjusted for accessible contrast */
+  --color-burgundy: #C97A84;
+  --color-burgundy-light: #3E2328;
+  --color-sage: #9AA891;
+  --color-sage-light: #283225;
+  --color-sage-dark: #B2C0A9;
+  --color-olive: #A3AF99;
+  --color-dusty-rose: #D4A5A3;
+  --color-dusty-rose-light: #3A272A;
+  --color-terracotta: #D4917B;
+  --color-terracotta-light: #3D2721;
+
+  /* Heatmap activity levels in dark mode */
+  --color-heatmap-0: #261D19;
+  --color-heatmap-1: #3E4B3A;
+  --color-heatmap-2: #657D5C;
+  --color-heatmap-3: #9AA891;
+
+  /* Reading Streak Amber Tokens (Candlelight Mode) */
+  --color-amber: #D69E58;
+  --color-amber-light: #382B1E;
+
+  /* Genre Pill Contrast (Candlelight Mode): Dark walnut fill with crisp antique cream text */
+  --color-badge-genre-bg: #382B27;
+  --color-badge-genre-text: #EFE6D8;
+  --color-badge-genre-border: #4D3C36;
+
+  /* Semantic Surface Tokens (Candlelight Mode) */
+  --bg-elevated: #2F2522;
+  --bg-secondary: #2F2522;
+  --bg-muted: #2B221F;
+  --bg-subtle: #28201D;
+  --bg-hover: #382C28;
+  --bg-input: #241C19;
+  --bg-badge: #382B27;
+
+  /* Dark mode paper shadows with gentle depth */
+  --shadow-paper-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-paper: 0 4px 14px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-paper-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+  --shadow-paper-lift: 0 16px 36px rgba(0, 0, 0, 0.65), 0 6px 14px rgba(0, 0, 0, 0.45);
+  --shadow-book-spine: -2px 0 6px rgba(0, 0, 0, 0.4) inset, 4px 6px 16px rgba(0, 0, 0, 0.5);
 }

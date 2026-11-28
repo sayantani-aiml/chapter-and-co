@@ -31,7 +31,7 @@ export default function Toast() {
             key={toast.id}
             style={{
               pointerEvents: 'auto',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               border: `1px solid ${isError ? '#D89797' : 'var(--color-border-warm)'}`,
               borderRadius: 'var(--radius-md)',
               boxShadow: 'var(--shadow-paper-lg)',

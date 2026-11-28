@@ -360,3 +360,68 @@ export const MOOD_OPTIONS = [
   { label: 'Excited', color: '#8A5D3B', bg: '#F7EDE6' },
   { label: 'Heartbroken', color: '#7E6377', bg: '#F5EFF4' }
 ];
+
+export const READER_TYPE_OPTIONS = [
+  'The Atmospheric Escapist',
+  'The Cozy Comfort Reader',
+  'The Scholarly Annotator',
+  'The Midnight Devourer',
+  'The Whimsical Wanderer',
+  'The Emotional Collector'
+];
+
+export const READING_TIME_OPTIONS = [
+  'Late evenings by warm lamplight',
+  'Early dawn with morning black coffee',
+  'Rainy Sunday afternoons',
+  'Quiet twilight hours in the garden',
+  'Late-night silence in bed'
+];
+
+export const FORMAT_PREFERENCE_OPTIONS = [
+  'Physical Books (Hardcovers & Deckle Edges)',
+  'Physical Paperbacks (Pocket Editions)',
+  'E-Reader / Ebooks (Paperwhite / Warm Light)',
+  'Audiobooks (Immersive Narrations)',
+  'Hybrid Reader (Any format that holds a story)'
+];
+
+export const DEFAULT_PROFILE = {
+  name: 'Eleanor Vance',
+  username: 'eleanor.reads',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  age: 26,
+  dateOfBirth: '1998-04-12',
+  gender: 'Female',
+  location: 'Edinburgh, Scotland',
+  tagline: 'Lost between the pages of 19th-century novels and cups of Earl Grey.',
+  bio: "A lifelong bibliophile and collector of antique paperbacks. When I'm not wandering quiet second-hand bookshops or annotating margin notes, you can find me writing letters with fountain pens, tending to my indoor botanical jungle, or trying yet another blend of lavender tea.",
+  occupation: 'Literary Archivist & Book Conservator',
+  education: 'M.A. in English Literature, University of Edinburgh',
+  favoriteBookstore: 'Shakespeare & Company',
+  personalQuote: 'I declare after all there is no enjoyment like reading! How much sooner one tires of any thing than of a book!',
+  personalQuoteAuthor: 'Jane Austen, Pride and Prejudice',
+  readingPersonality: {
+    readerType: 'The Atmospheric Escapist',
+    favouriteGenre: 'Gothic Fiction & Victorian Romance',
+    readingTime: 'Late evenings by warm lamplight',
+    formatPreference: 'Physical Books (Hardcovers & Deckle Edges)',
+    readingAtmosphere: 'A deep velvet armchair beside a rainy bay window, a crackling cedar fire, and an oversized mug of hot spiced chai.',
+    personalityDescription: 'You read for sanctuary and slow living. You savor every sentence, frequently pause to admire beautiful turns of phrase, and keep dried flowers between your favorite chapters. For you, books are not numbers on a checklist, but lifelong companions.'
+  },
+  favourites: [
+    { id: 'fav-1', category: 'Favourite Book', value: 'Pride and Prejudice', icon: 'BookOpen', note: 'Read 4 times; eternal comfort' },
+    { id: 'fav-2', category: 'Favourite Author', value: 'Jane Austen', icon: 'Feather', note: 'Matchless wit and keen observations' },
+    { id: 'fav-3', category: 'Favourite Genre', value: 'Gothic Classics & Victorian Drama', icon: 'Bookmark', note: 'Moody moors and brooding halls' },
+    { id: 'fav-4', category: 'Favourite Character', value: 'Elizabeth Bennet', icon: 'UserCheck', note: 'Fierce independence and bright humor' },
+    { id: 'fav-5', category: 'Favourite Book Series', value: 'Anne of Green Gables', icon: 'Layers', note: 'L.M. Montgomery’s idyllic island prose' },
+    { id: 'fav-6', category: 'Favourite Movie', value: 'Little Women (2019)', icon: 'Film', note: 'Directed by Greta Gerwig' },
+    { id: 'fav-7', category: 'Favourite TV Show / Anime', value: 'Anne with an E & Frieren', icon: 'Tv', note: 'Poetic, gentle, and contemplative' },
+    { id: 'fav-8', category: 'Favourite Music Artist', value: 'Sleeping At Last', icon: 'Music', note: 'The ultimate reading soundtrack' },
+    { id: 'fav-9', category: 'Favourite Song', value: 'Turning Page', icon: 'Disc', note: 'Sublime cello and piano chords' },
+    { id: 'fav-10', category: 'Favourite Colour', value: 'Antique Sage Green', icon: 'Palette', color: '#899581', note: 'Muted tranquility of dried eucalyptus' },
+    { id: 'fav-11', category: 'Favourite Food', value: 'Warm Cinnamon Scones with Clotted Cream', icon: 'Coffee', note: 'Best served with steaming Earl Grey' },
+    { id: 'fav-12', category: 'Favourite Hobby', value: 'Fountain pen journaling & Antiquing', icon: 'Compass', note: 'Ink-stained fingers and old dust' },
+    { id: 'fav-13', category: 'Favourite Fictional Universe', value: 'The Shire (Middle-earth)', icon: 'Globe', note: 'Round green doors, tea, and warm hearths' }
+  ]
+};

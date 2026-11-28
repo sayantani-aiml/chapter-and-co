@@ -10,12 +10,11 @@ export default function EmptyState({
 }) {
   return (
     <div
+      className="empty-state-container"
       style={{
         textAlign: 'center',
         padding: '3.5rem 1.5rem',
-        backgroundColor: 'rgba(250, 247, 242, 0.7)',
         borderRadius: 'var(--radius-lg)',
-        border: '1px dashed var(--color-border-warm)',
         margin: '1.5rem 0'
       }}
     >
@@ -37,6 +36,7 @@ export default function EmptyState({
       </div>
 
       <h3
+        className="empty-state-title"
         style={{
           fontFamily: 'var(--font-serif)',
           fontSize: '1.45rem',
@@ -48,6 +48,7 @@ export default function EmptyState({
       </h3>
 
       <p
+        className="empty-state-description"
         style={{
           fontSize: '0.92rem',
           color: 'var(--color-ink-muted)',

@@ -53,7 +53,7 @@ export default function BookCard({ book, viewMode = 'grid' }) {
           marginBottom: '0.85rem',
           cursor: 'pointer',
           borderRadius: 'var(--radius-md)',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-subtle)',
           transition: 'transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base)'
         }}
@@ -80,11 +80,23 @@ export default function BookCard({ book, viewMode = 'grid' }) {
 
         {/* Title & Author */}
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
             <span className={`book-badge status-${book.status}`}>
               {STATUS_LABELS[book.status] || book.status}
             </span>
             {book.genre && <span className="book-badge genre-badge">{book.genre}</span>}
+            {book.series?.name && (
+              <span
+                className="book-badge"
+                style={{
+                  backgroundColor: 'var(--color-antique-paper)',
+                  color: 'var(--color-burgundy)',
+                  borderColor: 'var(--color-border-warm)'
+                }}
+              >
+                {book.series.name} · #{book.series.number || 1}{book.series.total ? ` of ${book.series.total}` : ''}
+              </span>
+            )}
           </div>
           <h4
             style={{
@@ -166,7 +178,7 @@ export default function BookCard({ book, viewMode = 'grid' }) {
         cursor: 'pointer',
         padding: '0.85rem',
         borderRadius: 'var(--radius-md)',
-        backgroundColor: '#FAF7F2',
+        backgroundColor: 'var(--color-paper-light)',
         border: '1px solid var(--color-border-subtle)',
         transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s'
       }}
@@ -236,6 +248,22 @@ export default function BookCard({ book, viewMode = 'grid' }) {
           >
             {book.author}
           </p>
+          {book.series?.name && (
+            <div
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--color-burgundy)',
+                fontWeight: 500,
+                marginTop: '0.2rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+              title={`${book.series.name} · #${book.series.number || 1}${book.series.total ? ` of ${book.series.total}` : ''}`}
+            >
+              {book.series.name} · #{book.series.number || 1}{book.series.total ? ` of ${book.series.total}` : ''}
+            </div>
+          )}
         </div>
 
         {/* Rating and Genre */}

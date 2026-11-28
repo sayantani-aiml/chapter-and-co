@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Palette options for bespoke book covers when image is not provided or fails to load
 const COVER_THEMES = [
@@ -19,6 +19,10 @@ export default function BookCover({
   style = {}
 }) {
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [coverUrl]);
 
   // Deterministically select a cover theme based on the book's title
   const themeIndex = title

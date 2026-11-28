@@ -12,7 +12,10 @@ import {
   RotateCcw,
   Trash2,
   MoreVertical,
-  BookMarked
+  BookMarked,
+  User,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -24,7 +27,9 @@ export default function Sidebar() {
     handleExport,
     handleImport,
     handleResetToSample,
-    handleClearAll
+    handleClearAll,
+    theme,
+    toggleTheme
   } = useLibrary();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,7 +40,8 @@ export default function Sidebar() {
     { id: 'bookshelf', label: 'My Bookshelf', icon: BookOpen },
     { id: 'journal', label: 'Reading Journal', icon: Feather },
     { id: 'statistics', label: 'Statistics', icon: BarChart2 },
-    { id: 'goals', label: 'Reading Goals', icon: Target }
+    { id: 'goals', label: 'Reading Goals', icon: Target },
+    { id: 'profile', label: 'My Profile', icon: User }
   ];
 
   const onImportClick = () => {
@@ -58,7 +64,7 @@ export default function Sidebar() {
       className="app-sidebar"
       style={{
         width: '270px',
-        backgroundColor: '#FAF7F2',
+        backgroundColor: 'var(--color-paper-light)',
         borderRight: '1px solid var(--color-border-subtle)',
         display: 'flex',
         flexDirection: 'column',
@@ -167,6 +173,50 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        {/* Candlelight Mode Toggle Button */}
+        <div style={{ marginTop: '1.25rem' }}>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              padding: '0.6rem 0.85rem',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: theme === 'dark' ? 'rgba(201, 122, 132, 0.12)' : 'var(--color-antique-paper)',
+              border: '1px solid var(--color-border-warm)',
+              color: 'var(--color-espresso)',
+              fontSize: '0.84rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
+            }}
+            title={theme === 'dark' ? 'Switch to Daybreak Mode' : 'Switch to Candlelight Mode'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              {theme === 'dark' ? (
+                <Sun size={17} style={{ color: '#D4917B' }} />
+              ) : (
+                <Moon size={17} style={{ color: 'var(--color-burgundy)' }} />
+              )}
+              <span>Candlelight Mode</span>
+            </div>
+            <span
+              style={{
+                fontSize: '0.7rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: theme === 'dark' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
+                fontWeight: 600
+              }}
+            >
+              {theme === 'dark' ? 'On' : 'Off'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Reader Profile & Library Actions Footer */}
@@ -181,18 +231,49 @@ export default function Sidebar() {
             backgroundColor: isMenuOpen ? 'var(--color-antique-paper)' : 'transparent'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', minWidth: 0 }}>
-            <img
-              src={profile.avatar}
-              alt={profile.name}
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '1px solid var(--color-border-warm)'
-              }}
-            />
+          <div
+            onClick={() => setActiveTab('profile')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.7rem',
+              minWidth: 0,
+              cursor: 'pointer',
+              flex: 1
+            }}
+            title="View My Profile"
+          >
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt={profile.name}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1px solid var(--color-border-warm)'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-burgundy-light)',
+                  color: 'var(--color-burgundy)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  border: '1px solid var(--color-border-warm)'
+                }}
+              >
+                {profile.name ? profile.name.charAt(0).toUpperCase() : 'B'}
+              </div>
+            )}
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
@@ -216,7 +297,7 @@ export default function Sidebar() {
                   textOverflow: 'ellipsis'
                 }}
               >
-                Personal Reader
+                {profile.username ? `@${profile.username.replace('@', '')}` : 'Personal Reader'}
               </div>
             </div>
           </div>
@@ -252,7 +333,7 @@ export default function Sidebar() {
               right: 0,
               marginBottom: '0.5rem',
               padding: '0.5rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--color-paper-card)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--color-border-warm)',
               boxShadow: 'var(--shadow-paper-lg)',

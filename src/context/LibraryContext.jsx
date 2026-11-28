@@ -4,6 +4,7 @@ import {
   getInitialLibraryState,
   saveStoredData,
   STORAGE_KEYS,
+  INITIAL_SHELVES,
   exportLibraryAsJSON,
   validateImportedJSON,
   clearAllLibraryStorage
@@ -12,7 +13,8 @@ import {
   INITIAL_BOOKS,
   INITIAL_JOURNAL_ENTRIES,
   INITIAL_READING_SESSIONS,
-  INITIAL_ANNUAL_GOAL
+  INITIAL_ANNUAL_GOAL,
+  DEFAULT_PROFILE
 } from '../data/sampleData';
 import { getTodayDateString } from '../utils/dates';
 
@@ -26,6 +28,27 @@ export function LibraryProvider({ children }) {
   const [sessions, setSessions] = useState(initialData.sessions);
   const [goal, setGoal] = useState(initialData.goal);
   const [profile, setProfile] = useState(initialData.profile);
+  const [shelves, setShelves] = useState(initialData.shelves || INITIAL_SHELVES);
+
+  // Theme state: 'light' (Daybreak) | 'dark' (Candlelight)
+  const [theme, setTheme] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.THEME);
+      if (stored === 'dark' || stored === 'light') return stored;
+    } catch {}
+    return 'light';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.THEME, theme);
+    } catch {}
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Active navigation view: 'home' | 'bookshelf' | 'journal' | 'statistics' | 'goals'
   const [activeTab, setActiveTab] = useState('home');
@@ -73,6 +96,10 @@ export function LibraryProvider({ children }) {
     saveStoredData(STORAGE_KEYS.USER_PROFILE, profile);
   }, [profile]);
 
+  useEffect(() => {
+    saveStoredData(STORAGE_KEYS.SHELVES, shelves);
+  }, [shelves]);
+
   // Keep selectedBook updated if books list changes
   useEffect(() => {
     if (selectedBook) {
@@ -108,7 +135,16 @@ export function LibraryProvider({ children }) {
       quotes: bookData.quotes || [],
       tags: bookData.tags || [],
       rating: Number(bookData.rating) || 0,
-      status: bookData.status || 'want-to-read'
+      status: bookData.status || 'want-to-read',
+      shelves: Array.isArray(bookData.shelves) ? bookData.shelves : [],
+      series: bookData.series?.name
+        ? {
+            name: bookData.series.name.trim(),
+            number: bookData.series.number !== '' ? Number(bookData.series.number) || bookData.series.number : '',
+            total: bookData.series.total !== '' ? Number(bookData.series.total) || bookData.series.total : ''
+          }
+        : null,
+      rereads: Array.isArray(bookData.rereads) ? bookData.rereads : []
     };
 
     if (newBook.status === 'completed' && !newBook.dateFinished) {
@@ -207,6 +243,68 @@ export function LibraryProvider({ children }) {
     showToast(`Logged ${pagesRead || 0} pages of quiet reading.`);
   };
 
+  // --- CUSTOM SHELVES CRUD ---
+  const addCustomShelf = (shelfName) => {
+    const trimmed = (shelfName || '').trim();
+    if (!trimmed) return false;
+    if (shelves.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      showToast(`Shelf "${trimmed}" already exists.`, 'error');
+      return false;
+    }
+    setShelves(prev => [...prev, trimmed]);
+    showToast(`Created custom shelf "${trimmed}".`);
+    return true;
+  };
+
+  const deleteCustomShelf = (shelfName) => {
+    setShelves(prev => prev.filter(s => s !== shelfName));
+    setBooks(prev =>
+      prev.map(book => {
+        if (!book.shelves || !book.shelves.includes(shelfName)) return book;
+        return {
+          ...book,
+          shelves: book.shelves.filter(s => s !== shelfName)
+        };
+      })
+    );
+    showToast(`Removed shelf "${shelfName}".`);
+  };
+
+  // --- REREAD HISTORY CRUD ---
+  const addRereadToBook = (bookId, rereadData) => {
+    const newReread = {
+      id: 'reread-' + Date.now(),
+      startDate: rereadData.startDate || '',
+      finishDate: rereadData.finishDate || getTodayDateString(),
+      rating: Number(rereadData.rating) || 0,
+      note: rereadData.note ? rereadData.note.trim() : ''
+    };
+
+    setBooks(prev =>
+      prev.map(book => {
+        if (book.id !== bookId) return book;
+        return {
+          ...book,
+          rereads: [newReread, ...(book.rereads || [])]
+        };
+      })
+    );
+    showToast('Reread recorded in your literary log.');
+  };
+
+  const deleteRereadFromBook = (bookId, rereadId) => {
+    setBooks(prev =>
+      prev.map(book => {
+        if (book.id !== bookId) return book;
+        return {
+          ...book,
+          rereads: (book.rereads || []).filter(r => r.id !== rereadId)
+        };
+      })
+    );
+    showToast('Reread record removed.');
+  };
+
   // --- QUOTES ---
   const addQuoteToBook = (bookId, quoteData) => {
     const newQuote = {
@@ -287,9 +385,35 @@ export function LibraryProvider({ children }) {
     showToast('Journal entry deleted.');
   };
 
+  // --- PROFILE MANAGEMENT ---
+  const updateProfile = (updatedFields) => {
+    setProfile(prev => {
+      const merged = {
+        ...prev,
+        ...updatedFields
+      };
+      if (updatedFields.readingPersonality) {
+        merged.readingPersonality = {
+          ...(prev.readingPersonality || {}),
+          ...updatedFields.readingPersonality
+        };
+      }
+      if (updatedFields.favourites) {
+        merged.favourites = updatedFields.favourites;
+      }
+      return merged;
+    });
+    showToast('Profile updated successfully.');
+  };
+
+  const resetProfile = () => {
+    setProfile(DEFAULT_PROFILE);
+    showToast('Profile restored to default literary records.');
+  };
+
   // --- IMPORT / EXPORT / RESET ---
   const handleExport = () => {
-    exportLibraryAsJSON({ books, journal, sessions, goal, profile });
+    exportLibraryAsJSON({ books, journal, sessions, goal, profile, shelves });
     showToast('Library exported to JSON successfully.');
   };
 
@@ -304,6 +428,9 @@ export function LibraryProvider({ children }) {
         setSessions(validated.sessions);
         setGoal(validated.goal);
         setProfile(validated.profile);
+        if (Array.isArray(validated.shelves)) {
+          setShelves(validated.shelves);
+        }
         showToast('Library successfully imported!');
       } catch (err) {
         showToast(err.message || 'Error parsing imported file', 'error');
@@ -318,6 +445,8 @@ export function LibraryProvider({ children }) {
     setJournal(INITIAL_JOURNAL_ENTRIES);
     setSessions(INITIAL_READING_SESSIONS);
     setGoal(INITIAL_ANNUAL_GOAL);
+    setProfile(DEFAULT_PROFILE);
+    setShelves(INITIAL_SHELVES);
     setSelectedBook(null);
     showToast('Sample library restored.');
   };
@@ -327,6 +456,7 @@ export function LibraryProvider({ children }) {
     setBooks([]);
     setJournal([]);
     setSessions([]);
+    setShelves(INITIAL_SHELVES);
     setSelectedBook(null);
     showToast('Library cleared. Ready for your personal books.');
   };
@@ -339,6 +469,11 @@ export function LibraryProvider({ children }) {
         sessions,
         goal,
         profile,
+        shelves,
+        addCustomShelf,
+        deleteCustomShelf,
+        addRereadToBook,
+        deleteRereadFromBook,
         activeTab,
         setActiveTab,
         selectedBook,
@@ -364,11 +499,16 @@ export function LibraryProvider({ children }) {
         addJournalEntry,
         updateJournalEntry,
         deleteJournalEntry,
+        updateProfile,
+        resetProfile,
         setReadingGoal: setGoal,
         handleExport,
         handleImport,
         handleResetToSample,
-        handleClearAll
+        handleClearAll,
+        theme,
+        setTheme,
+        toggleTheme
       }}
     >
       {children}

@@ -33,12 +33,15 @@ import {
 } from 'lucide-react';
 
 export default function Statistics() {
-  const { books, sessions, goal } = useLibrary();
+  const { books, sessions, goal, theme } = useLibrary();
 
   const totalPages = useMemo(() => calculateTotalPagesRead(books, sessions), [books, sessions]);
   const totalMinutes = useMemo(() => calculateTotalMinutes(sessions), [sessions]);
   const avgRating = useMemo(() => calculateAverageRating(books), [books]);
   const streak = useMemo(() => calculateReadingStreak(sessions), [sessions]);
+
+  const axisTextColor = theme === 'dark' ? '#B5A596' : '#6B645D';
+  const axisCategoryColor = theme === 'dark' ? '#EFE6D8' : '#45372F';
 
   const currentYear = new Date().getFullYear();
   const completedBooks = useMemo(
@@ -72,7 +75,7 @@ export default function Statistics() {
       return (
         <div
           style={{
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-card)',
             border: '1px solid var(--color-border-warm)',
             padding: '0.45rem 0.75rem',
             borderRadius: 'var(--radius-sm)',
@@ -133,7 +136,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.4rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -157,7 +160,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.4rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -181,7 +184,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.4rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -205,7 +208,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.4rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -241,7 +244,7 @@ export default function Statistics() {
         className="paper-card"
         style={{
           padding: '1.75rem 2rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-subtle)',
           borderRadius: 'var(--radius-md)'
         }}
@@ -269,10 +272,10 @@ export default function Statistics() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.74rem', color: 'var(--color-ink-muted)' }}>
             <span>Less</span>
-            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-antique-paper)', borderRadius: '2px' }} />
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#CFD9CA', borderRadius: '2px' }} />
-            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-sage)', borderRadius: '2px' }} />
-            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-olive)', borderRadius: '2px' }} />
+            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-heatmap-0)', borderRadius: '2px' }} />
+            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-heatmap-1)', borderRadius: '2px' }} />
+            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-heatmap-2)', borderRadius: '2px' }} />
+            <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--color-heatmap-3)', borderRadius: '2px' }} />
             <span>More</span>
           </div>
         </div>
@@ -290,10 +293,10 @@ export default function Statistics() {
         >
           {heatmapDays.map((day, idx) => {
             const colors = [
-              'var(--color-antique-paper)',
-              '#CFD9CA',
-              'var(--color-sage)',
-              'var(--color-olive)'
+              'var(--color-heatmap-0)',
+              'var(--color-heatmap-1)',
+              'var(--color-heatmap-2)',
+              'var(--color-heatmap-3)'
             ];
             const bg = colors[day.level];
 
@@ -328,7 +331,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.75rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -350,8 +353,8 @@ export default function Statistics() {
           <div style={{ width: '100%', height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6B645D' }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6B645D' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: axisTextColor }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: axisTextColor }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="count" fill="var(--color-burgundy)" radius={[3, 3, 0, 0]} />
               </BarChart>
@@ -364,7 +367,7 @@ export default function Statistics() {
           className="paper-card"
           style={{
             padding: '1.75rem',
-            backgroundColor: '#FAF7F2',
+            backgroundColor: 'var(--color-paper-light)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: 'var(--radius-md)'
           }}
@@ -425,7 +428,7 @@ export default function Statistics() {
         className="paper-card"
         style={{
           padding: '1.75rem 2rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-subtle)',
           borderRadius: 'var(--radius-md)'
         }}
@@ -451,8 +454,8 @@ export default function Statistics() {
               layout="vertical"
               margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
             >
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#6B645D' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="stars" type="category" tick={{ fontSize: 12, fill: '#45372F' }} axisLine={false} tickLine={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: axisTextColor }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="stars" type="category" tick={{ fontSize: 12, fill: axisCategoryColor }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" fill="var(--color-terracotta)" radius={[0, 3, 3, 0]} />
             </BarChart>

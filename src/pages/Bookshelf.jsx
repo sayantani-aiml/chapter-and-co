@@ -12,11 +12,13 @@ import {
   Plus,
   BookOpen,
   ArrowUpDown,
-  BookX
+  BookX,
+  Trash2,
+  Folder
 } from 'lucide-react';
 
 export default function Bookshelf() {
-  const { books, setIsAddBookModalOpen } = useLibrary();
+  const { books, setIsAddBookModalOpen, shelves = [], addCustomShelf, deleteCustomShelf } = useLibrary();
 
   // Display mode: 'grid' | 'list'
   const [viewMode, setViewMode] = useState('grid');
@@ -26,7 +28,12 @@ export default function Bookshelf() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [genreFilter, setGenreFilter] = useState('All Genres');
   const [ratingFilter, setRatingFilter] = useState('all');
+  const [shelfFilter, setShelfFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent-added');
+
+  // Manage Shelves Modal
+  const [isManageShelvesOpen, setIsManageShelvesOpen] = useState(false);
+  const [newShelfModalInput, setNewShelfModalInput] = useState('');
 
   const statusTabs = [
     { id: 'all', label: 'All Volumes' },
@@ -58,6 +65,11 @@ export default function Bookshelf() {
           if (ratingFilter === '4+' && r < 4) return false;
           if (ratingFilter === '3+' && r < 3) return false;
           if (ratingFilter === 'unrated' && r > 0) return false;
+        }
+
+        // Shelf filter
+        if (shelfFilter !== 'all' && (!book.shelves || !book.shelves.includes(shelfFilter))) {
+          return false;
         }
 
         // Search query
@@ -94,13 +106,14 @@ export default function Bookshelf() {
         // default: recently added (by id or order)
         return 0;
       });
-  }, [books, statusFilter, genreFilter, ratingFilter, searchQuery, sortBy]);
+  }, [books, statusFilter, genreFilter, ratingFilter, shelfFilter, searchQuery, sortBy]);
 
   const clearAllFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
     setGenreFilter('All Genres');
     setRatingFilter('all');
+    setShelfFilter('all');
     setSortBy('recent-added');
   };
 
@@ -108,7 +121,8 @@ export default function Bookshelf() {
     searchQuery ||
     statusFilter !== 'all' ||
     genreFilter !== 'All Genres' ||
-    ratingFilter !== 'all';
+    ratingFilter !== 'all' ||
+    shelfFilter !== 'all';
 
   return (
     <div className="bookshelf-page fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -171,7 +185,7 @@ export default function Bookshelf() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.8rem',
                 fontWeight: viewMode === 'grid' ? 600 : 400,
-                backgroundColor: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
+                backgroundColor: viewMode === 'grid' ? 'var(--color-paper-card)' : 'transparent',
                 color: viewMode === 'grid' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
                 boxShadow: viewMode === 'grid' ? 'var(--shadow-paper-sm)' : 'none'
               }}
@@ -192,7 +206,7 @@ export default function Bookshelf() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.8rem',
                 fontWeight: viewMode === 'list' ? 600 : 400,
-                backgroundColor: viewMode === 'list' ? '#FFFFFF' : 'transparent',
+                backgroundColor: viewMode === 'list' ? 'var(--color-paper-card)' : 'transparent',
                 color: viewMode === 'list' ? 'var(--color-burgundy)' : 'var(--color-ink-muted)',
                 boxShadow: viewMode === 'list' ? 'var(--shadow-paper-sm)' : 'none'
               }}
@@ -238,16 +252,11 @@ export default function Bookshelf() {
               key={tab.id}
               type="button"
               onClick={() => setStatusFilter(tab.id)}
+              className={isActive ? 'status-filter-pill active' : 'status-filter-pill'}
               style={{
                 padding: '0.45rem 0.9rem',
                 borderRadius: '999px',
                 fontSize: '0.84rem',
-                fontWeight: isActive ? 600 : 400,
-                backgroundColor: isActive ? 'var(--color-burgundy)' : 'rgba(237, 228, 213, 0.45)',
-                color: isActive ? '#FAF7F2' : 'var(--color-espresso)',
-                border: isActive
-                  ? '1px solid var(--color-burgundy)'
-                  : '1px solid var(--color-border-subtle)',
                 whiteSpace: 'nowrap',
                 transition: 'all var(--transition-fast)'
               }}
@@ -258,12 +267,104 @@ export default function Bookshelf() {
         })}
       </div>
 
+      {/* Custom Shelves Bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          overflowX: 'auto',
+          paddingBottom: '0.2rem',
+          scrollbarWidth: 'none'
+        }}
+      >
+        <span
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            color: 'var(--color-ink-muted)',
+            marginRight: '0.2rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Shelves:
+        </span>
+        <button
+          type="button"
+          onClick={() => setShelfFilter('all')}
+          style={{
+            padding: '0.35rem 0.75rem',
+            borderRadius: '999px',
+            fontSize: '0.78rem',
+            fontWeight: shelfFilter === 'all' ? 600 : 400,
+            backgroundColor: shelfFilter === 'all' ? 'var(--color-espresso)' : 'var(--color-paper-light)',
+            color: shelfFilter === 'all' ? '#FAF7F2' : 'var(--color-espresso)',
+            border: shelfFilter === 'all' ? '1px solid var(--color-espresso)' : '1px solid var(--color-border-warm)',
+            whiteSpace: 'nowrap',
+            cursor: 'pointer'
+          }}
+        >
+          All Shelves
+        </button>
+        {shelves.map((shelf) => {
+          const isActive = shelfFilter === shelf;
+          const count = books.filter((b) => b.shelves && b.shelves.includes(shelf)).length;
+          return (
+            <button
+              key={shelf}
+              type="button"
+              onClick={() => setShelfFilter(isActive ? 'all' : shelf)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '999px',
+                fontSize: '0.78rem',
+                fontWeight: isActive ? 600 : 400,
+                backgroundColor: isActive ? 'var(--color-burgundy)' : 'var(--color-paper-light)',
+                color: isActive ? '#FAF7F2' : 'var(--color-espresso)',
+                border: isActive ? '1px solid var(--color-burgundy)' : '1px solid var(--color-border-warm)',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer'
+              }}
+            >
+              <span>{shelf}</span>
+              <span style={{ opacity: 0.75, fontSize: '0.72rem' }}>({count})</span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setIsManageShelvesOpen(true)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            padding: '0.35rem 0.7rem',
+            borderRadius: '999px',
+            fontSize: '0.76rem',
+            backgroundColor: 'transparent',
+            color: 'var(--color-burgundy)',
+            border: '1px dashed var(--color-border-warm)',
+            whiteSpace: 'nowrap',
+            cursor: 'pointer'
+          }}
+          title="Create or manage custom shelves"
+        >
+          <Plus size={13} />
+          <span>New / Manage</span>
+        </button>
+      </div>
+
       {/* Search & Secondary Filters Bar */}
       <div
         className="paper-card"
         style={{
           padding: '1rem 1.25rem',
-          backgroundColor: '#FAF7F2',
+          backgroundColor: 'var(--color-paper-light)',
           border: '1px solid var(--color-border-subtle)',
           borderRadius: 'var(--radius-md)',
           display: 'flex',
@@ -326,6 +427,24 @@ export default function Bookshelf() {
               {GENRE_OPTIONS.map((g) => (
                 <option key={g} value={g}>
                   {g}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Shelf select */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-ink-muted)' }}>Shelf:</span>
+            <select
+              className="form-select"
+              value={shelfFilter}
+              onChange={(e) => setShelfFilter(e.target.value)}
+              style={{ fontSize: '0.82rem', padding: '0.4rem 0.65rem', width: 'auto' }}
+            >
+              <option value="all">All Shelves</option>
+              {shelves.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
             </select>
@@ -411,6 +530,158 @@ export default function Bookshelf() {
           onAction={hasActiveFilters ? clearAllFilters : () => setIsAddBookModalOpen(true)}
           icon={searchQuery ? BookX : BookOpen}
         />
+      )}
+      {/* Manage Shelves Modal */}
+      {isManageShelvesOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            backgroundColor: 'rgba(48, 45, 41, 0.5)',
+            backdropFilter: 'blur(3px)',
+            animation: 'modalBackdrop 0.2s ease forwards'
+          }}
+          onClick={() => setIsManageShelvesOpen(false)}
+        >
+          <div
+            className="paper-card"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: 'var(--color-paper-light)',
+              border: '1px solid var(--color-border-warm)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-paper-lg)',
+              padding: '1.75rem',
+              animation: 'modalContent 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1.25rem',
+                borderBottom: '1px solid var(--color-border-subtle)',
+                paddingBottom: '0.75rem'
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.35rem',
+                  color: 'var(--color-espresso)',
+                  margin: 0
+                }}
+              >
+                Manage Custom Shelves
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsManageShelvesOpen(false)}
+                className="btn-ghost"
+                style={{ padding: '0.35rem' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Create New Shelf Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = newShelfModalInput.trim();
+                if (trimmed) {
+                  addCustomShelf(trimmed);
+                  setNewShelfModalInput('');
+                }
+              }}
+              style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}
+            >
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Enter new shelf title..."
+                value={newShelfModalInput}
+                onChange={(e) => setNewShelfModalInput(e.target.value)}
+                style={{ fontSize: '0.85rem' }}
+              />
+              <button type="submit" className="btn-primary" style={{ flexShrink: 0, fontSize: '0.82rem' }}>
+                <Plus size={14} />
+                <span>Create</span>
+              </button>
+            </form>
+
+            {/* Shelf List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '260px', overflowY: 'auto' }}>
+              {shelves.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--color-ink-muted)', padding: '1rem', fontStyle: 'italic', fontSize: '0.86rem' }}>
+                  No custom shelves yet.
+                </div>
+              ) : (
+                shelves.map((shelf) => {
+                  const bookCount = books.filter((b) => b.shelves && b.shelves.includes(shelf)).length;
+                  return (
+                    <div
+                      key={shelf}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.55rem 0.85rem',
+                        backgroundColor: 'var(--color-antique-paper)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--color-border-subtle)'
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--color-espresso)' }}>
+                          {shelf}
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--color-ink-muted)', marginLeft: '0.5rem' }}>
+                          ({bookCount} volume{bookCount === 1 ? '' : 's'})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Delete shelf "${shelf}"? Books in this shelf will remain in your library.`)) {
+                            deleteCustomShelf(shelf);
+                            if (shelfFilter === shelf) {
+                              setShelfFilter('all');
+                            }
+                          }
+                        }}
+                        className="btn-ghost"
+                        style={{ color: '#8C3838', padding: '0.25rem' }}
+                        title="Delete shelf"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem', borderTop: '1px solid var(--color-border-subtle)', paddingTop: '0.85rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsManageShelvesOpen(false)}
+                className="btn-secondary"
+                style={{ fontSize: '0.82rem' }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

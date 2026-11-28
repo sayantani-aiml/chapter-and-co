@@ -191,7 +191,7 @@ export default function Home() {
             className="paper-card"
             style={{
               padding: '1.35rem 1.4rem',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               border: '1px solid var(--color-border-subtle)',
               borderRadius: 'var(--radius-md)'
             }}
@@ -239,7 +239,7 @@ export default function Home() {
             className="paper-card"
             style={{
               padding: '1.35rem 1.4rem',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               border: '1px solid var(--color-border-subtle)',
               borderRadius: 'var(--radius-md)',
               cursor: 'pointer'
@@ -285,7 +285,7 @@ export default function Home() {
             className="paper-card"
             style={{
               padding: '1.35rem 1.4rem',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               border: '1px solid var(--color-border-subtle)',
               borderRadius: 'var(--radius-md)',
               cursor: 'pointer'
@@ -331,7 +331,7 @@ export default function Home() {
             className="paper-card"
             style={{
               padding: '1.35rem 1.4rem',
-              backgroundColor: '#FAF7F2',
+              backgroundColor: 'var(--color-paper-light)',
               border: '1px solid var(--color-border-subtle)',
               borderRadius: 'var(--radius-md)'
             }}
@@ -345,11 +345,11 @@ export default function Home() {
                   width: '28px',
                   height: '28px',
                   borderRadius: '50%',
-                  backgroundColor: '#FDF6E9',
+                  backgroundColor: 'var(--color-amber-light)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#C28B47'
+                  color: 'var(--color-amber)'
                 }}
               >
                 <Flame size={15} />
